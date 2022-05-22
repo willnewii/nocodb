@@ -74,7 +74,7 @@
       v-on="parentListeners"
     />
 
-    <enum-cell
+    <single-select-cell
       v-else-if="isEnum && (( !isForm && !active) || isLocked || (isPublic && !isForm))"
       v-model="localState"
       :column="column"
@@ -142,7 +142,7 @@ import TimePickerCell from '~/components/project/spreadsheet/components/editable
 import BooleanCell from '~/components/project/spreadsheet/components/editableCell/BooleanCell'
 import cell from '@/components/project/spreadsheet/mixins/cell'
 import EditableAttachmentCell from '~/components/project/spreadsheet/components/editableCell/EditableAttachmentCell'
-import EnumCell from '~/components/project/spreadsheet/components/cell/EnumCell'
+import SingleSelectCell from '~/components/project/spreadsheet/components/cell/SingleSelectCell'
 import SetListEditableCell from '~/components/project/spreadsheet/components/editableCell/SetListEditableCell'
 import SetListCell from '~/components/project/spreadsheet/components/cell/SetListCell'
 import RatingCell from '~/components/project/spreadsheet/components/editableCell/RatingCell'
@@ -155,7 +155,7 @@ export default {
     EditableUrlCell,
     SetListCell,
     SetListEditableCell,
-    EnumCell,
+    SingleSelectCell,
     EditableAttachmentCell,
     BooleanCell,
     TimePickerCell,

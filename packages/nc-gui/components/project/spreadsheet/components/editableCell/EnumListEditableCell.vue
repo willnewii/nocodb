@@ -1,10 +1,12 @@
 <template>
   <v-select
     v-model="localState"
+    :menu-props="{ bottom: true, offsetY: true }"
     solo
     dense
     flat
     :items="enumValues"
+    item-value="id"
     hide-details
     class="mt-0"
     :clearable="!column.rqd"
@@ -17,14 +19,14 @@
           'text-center' : !isForm
         }"
       >
-        <v-chip small :color="colors[enumValues.indexOf(item) % colors.length]" class="ma-1">
-          {{ item }}
+        <v-chip small :color="item.color" class="ma-1">
+          {{ item.title }}
         </v-chip>
       </div>
     </template>
     <template #item="{item}">
-      <v-chip small :color="colors[enumValues.indexOf(item) % colors.length]">
-        {{ item }}
+      <v-chip small :color="item.color">
+        {{ item.title }}
       </v-chip>
     </template>
     <template #append>
@@ -41,7 +43,6 @@ import colors from '@/mixins/colors'
 export default {
   name: 'EnumListEditableCell',
   mixins: [colors],
-
   props: {
     value: String,
     column: Object,
@@ -50,18 +51,20 @@ export default {
   computed: {
     localState: {
       get() {
-        return this.value && this.value.replace(/\\'/g, '\'').replace(/^'|'$/g, '')
+        return this.enumValues.find(el => el.id === this.value || el.title === this.value)
       },
       set(val) {
-        this.$emit('input', val)
+        if (this.column.dt === 'enum') {
+          this.$emit('input', this.enumValues.find(el => el.id === val).title)
+        } else {
+          this.$emit('input', val)
+        }
         this.$emit('update')
       }
     },
     enumValues() {
-      if (this.column && this.column.dtxp) {
-        return this.column.dtxp
-          .split(',')
-          .map(v => v.replace(/\\'/g, '\'').replace(/^'|'$/g, ''))
+      if (this.column && this.column.colOptions?.options) {
+        return this.column.colOptions.options
       }
       return []
     },
