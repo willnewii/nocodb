@@ -254,7 +254,7 @@ export class MysqlUi {
         return '';
 
       case 'enum':
-        return "'a','b'";
+        return '';
 
       case 'set':
         return "'a','b'";
@@ -979,7 +979,7 @@ export class MysqlUi {
         colProp.dt = 'set';
         break;
       case 'SingleSelect':
-        colProp.dt = 'enum';
+        colProp.dt = 'varchar';
         break;
       case 'Collaborator':
         colProp.dt = 'varchar';
@@ -1138,7 +1138,7 @@ export class MysqlUi {
         return ['set', 'text', 'tinytext', 'mediumtext', 'longtext'];
 
       case 'SingleSelect':
-        return ['enum', 'text', 'tinytext', 'mediumtext', 'longtext'];
+        return ['varchar', 'text', 'tinytext', 'mediumtext', 'longtext'];
 
       case 'Year':
         return ['year'];
