@@ -244,11 +244,12 @@ export default class Column<T = any> implements ColumnType {
         break;
       }
       case UITypes.SingleSelect: {
-        for (const option of column.dtxp?.split(',') || []) {
+        for (const [i, option] of column.options.entries() || [].entries()) {
           await SingleSelectColumn.insert(
             {
+              ...option,
               fk_column_id: colId,
-              title: option
+              order: i + 1
             },
             ncMeta
           );
@@ -325,7 +326,7 @@ export default class Column<T = any> implements ColumnType {
         res = await MultiSelectColumn.get(this.id, ncMeta);
         break;
       case UITypes.SingleSelect:
-        res = await SingleSelectColumn.get(this.id, ncMeta);
+        res = await SingleSelectColumn.read(this.id, ncMeta);
         break;
       case UITypes.Formula:
         res = await FormulaColumn.read(this.id, ncMeta);
@@ -769,13 +770,18 @@ export default class Column<T = any> implements ColumnType {
 
       case UITypes.MultiSelect:
       case UITypes.SingleSelect: {
+
+        //TODO update all records to null if option deleted
+        // for (const option of oldCol.colOptions.options.filter(oldOp => column.colOptions.options.find(newOp => newOp.id !== oldOp.id))) {}
+
         await ncMeta.metaDelete(null, null, MetaTable.COL_SELECT_OPTIONS, {
           fk_column_id: colId
         });
+
         await NocoCache.deepDel(
           CacheScope.COL_SELECT_OPTION,
-          `${CacheScope.COL_SELECT_OPTION}:${colId}`,
-          CacheDelDirection.CHILD_TO_PARENT
+          `${CacheScope.COL_SELECT_OPTION}:${colId}:list`,
+          CacheDelDirection.PARENT_TO_CHILD
         );
         break;
       }
@@ -822,6 +828,7 @@ export default class Column<T = any> implements ColumnType {
       // set cache
       await NocoCache.set(key, o);
     }
+    
     // set meta
     await ncMeta.metaUpdate(
       null,

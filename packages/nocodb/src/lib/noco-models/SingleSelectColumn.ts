@@ -5,6 +5,8 @@ import { CacheGetType, CacheScope, MetaTable } from '../utils/globals';
 export default class SingleSelectColumn {
   title: string;
   fk_column_id: string;
+  color: string;
+  order: number;
 
   constructor(data: Partial<SingleSelectColumn>) {
     Object.assign(this, data);
@@ -18,10 +20,7 @@ export default class SingleSelectColumn {
       null,
       null,
       MetaTable.COL_SELECT_OPTIONS,
-      {
-        fk_column_id: data.fk_column_id,
-        title: data.title
-      }
+      data
     );
 
     await NocoCache.appendToList(
@@ -72,7 +71,7 @@ export default class SingleSelectColumn {
       await NocoCache.setList(
         CacheScope.COL_SELECT_OPTION,
         [columnId],
-        options
+        options.map(({created_at, updated_at, ...others}) => others)
       );
     }
 
