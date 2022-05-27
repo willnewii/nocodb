@@ -83,6 +83,7 @@ export default async (
   const storeLinks = false;
   const skipAttachments = false;
   const ncLinkDataStore: any = {};
+  const pageSize = 100;
 
   const uniqueTableNameGen = getUniqueNameGenerator('sheet');
 
@@ -1376,14 +1377,20 @@ export default async (
     return rec;
   }
 
-  async function nocoReadData(sDB, table) {
+  async function nocoReadData(sDB, table, aTbl) {
     ncLinkDataStore[table.title] = {};
     const insertJobs: Promise<any>[] = [];
+
+    // skip virtual columns
+    const fieldsArray = aTbl.columns
+      .filter(a => !['formula', 'lookup', 'rollup'].includes(a.type))
+      .map(a => a.name);
 
     return new Promise((resolve, reject) => {
       base(table.title)
         .select({
-          pageSize: 100
+          pageSize: pageSize,
+          fields: fieldsArray
           // maxRecords: 1,
         })
         .eachPage(
@@ -1392,7 +1399,8 @@ export default async (
 
             // This function (`page`) will get called for each page of records.
             logBasic(
-              `:: ${table.title} : ${recordCnt + 1} ~ ${(recordCnt += 100)}`
+              `:: ${table.title} : ${recordCnt +
+                1} ~ ${(recordCnt += pageSize)}`
             );
 
             // await Promise.all(
@@ -1445,7 +1453,7 @@ export default async (
     return new Promise((resolve, reject) => {
       base(table.title)
         .select({
-          pageSize: 100,
+          pageSize: pageSize,
           // maxRecords: 100,
           fields: fields
         })
@@ -1457,7 +1465,7 @@ export default async (
             // records.forEach(record => callback(table, record));
             logBasic(
               `:: ${table.title} / ${fields} : ${recordCnt +
-                1} ~ ${(recordCnt += 100)}`
+                1} ~ ${(recordCnt += pageSize)}`
             );
             await Promise.all(
               records.map(r => callback(projName, table, r, fields))
@@ -2194,11 +2202,11 @@ export default async (
           recordPerfStats(_perfStart, 'dbTable.read');
 
           // not a migrated table, skip
-          if (undefined === aTblSchema.find(x => x.name === ncTbl.title))
-            continue;
+          const aTbl = aTblSchema.find(x => x.name === ncTbl.title);
+          if (undefined === aTbl) continue;
 
           recordCnt = 0;
-          await nocoReadData(syncDB, ncTbl);
+          await nocoReadData(syncDB, ncTbl, aTbl);
           logDetailed(`Data inserted from ${ncTbl.title}`);
         }
 
