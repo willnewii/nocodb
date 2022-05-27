@@ -31,6 +31,7 @@
           v-model="op.title"
           :autofocus="true"
           class="caption"
+          :rules="[enumNotNull, enumNoDuplicate]"
           dense
           outlined
         />
@@ -79,6 +80,13 @@ export default {
   },
   created() {
     this.options = this.copyOptions(this.column.colOptions?.options) || []
+    // migrate
+    if (this.column.dt === 'enum' && this.options.length) {
+      this.options.map((el) => {
+        el.title = el.title.replace(/'/g, '')
+        return el
+      })
+    }
   },
   methods: {
     addNewOption() {
@@ -139,6 +147,18 @@ export default {
         }
       }
       return temp
+    },
+    enumNotNull(v) {
+      if (this.column.dt === 'enum') {
+        return !!v || 'Migrated options can\'t be null'
+      }
+      return true
+    },
+    enumNoDuplicate(v) {
+      if (this.column.dt === 'enum') {
+        return this.options.filter(el => el.title === v).length === 1 || 'Migrated options can\'t have duplicates'
+      }
+      return true
     }
   }
 }
@@ -156,5 +176,11 @@ export default {
 
 .handle {
   cursor: pointer;
+}
+
+/deep/ .v-text-field__details {
+  position: absolute;
+  margin-top: 10px;
+  margin-left: 25px;
 }
 </style>

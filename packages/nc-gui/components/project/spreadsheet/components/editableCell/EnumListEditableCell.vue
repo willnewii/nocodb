@@ -20,13 +20,13 @@
         }"
       >
         <v-chip small :color="item.color" class="ma-1">
-          {{ item.title }}
+          {{ migrate(item.title) }}
         </v-chip>
       </div>
     </template>
     <template #item="{item}">
       <v-chip small :color="item.color">
-        {{ item.title }}
+        {{ migrate(item.title) }}
       </v-chip>
     </template>
     <template #append>
@@ -51,11 +51,18 @@ export default {
   computed: {
     localState: {
       get() {
-        return this.enumValues.find(el => el.id === this.value || el.title === this.value)
+        return (this.column.dt === 'enum')
+          ? this.enumValues.find((el) => {
+            if (this.migrate(el.title) === this.value) {
+              return this.value
+            }
+            return undefined
+          })
+          : this.enumValues.find(el => el.id === this.value)
       },
       set(val) {
-        if (this.column.dt === 'enum') {
-          this.$emit('input', this.enumValues.find(el => el.id === val).title)
+        if (this.column.dt === 'enum' && val) {
+          this.$emit('input', this.migrate(this.enumValues.find(el => el.id === val).title))
         } else {
           this.$emit('input', val)
         }
@@ -87,6 +94,16 @@ export default {
     // event = document.createEvent('MouseEvents');
     // event.initMouseEvent('mousedown', true, true, window);
     // this.$el.dispatchEvent(event);
+  },
+  methods: {
+    migrate(val) {
+      if (this.column.dt === 'enum') {
+        if ((typeof val === 'string' || val instanceof String)) {
+          return val.replace(/'/g, '')
+        }
+      }
+      return val
+    }
   }
 }
 </script>

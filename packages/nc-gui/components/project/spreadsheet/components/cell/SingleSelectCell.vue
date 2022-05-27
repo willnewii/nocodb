@@ -3,7 +3,7 @@
     <span
       v-if="value"
       :style="{
-        background: selected ? selected.color : '#ccc'
+        background: selected ? selected.color || '#ccc' : '#ccc'
       }"
       class="set-item ma-1 py-1 px-3"
     >{{ selected ? selected.title : value }}</span>

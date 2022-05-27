@@ -4,8 +4,10 @@ import LookupColumn from './LookupColumn';
 import RollupColumn from './RollupColumn';
 import SingleSelectColumn from './SingleSelectColumn';
 import MultiSelectColumn from './MultiSelectColumn';
+import Base from './Base';
 import Model from './Model';
 import NocoCache from '../noco-cache/NocoCache';
+import NcConnectionMgrv2 from '../noco/common/NcConnectionMgrv2';
 import { ColumnType, UITypes } from 'nocodb-sdk';
 import {
   CacheDelDirection,
@@ -244,15 +246,28 @@ export default class Column<T = any> implements ColumnType {
         break;
       }
       case UITypes.SingleSelect: {
-        for (const [i, option] of column.options.entries() || [].entries()) {
-          await SingleSelectColumn.insert(
-            {
-              ...option,
-              fk_column_id: colId,
-              order: i + 1
-            },
-            ncMeta
-          );
+        if (column.dt === 'enum' && !column.altered) {
+          for (const [i, option] of column.dtxp?.split(',').entries() || [].entries()) {
+            await SingleSelectColumn.insert(
+              {
+                fk_column_id: colId,
+                title: option,
+                order: i + 1
+              },
+              ncMeta
+            );
+          }
+        } else {
+          for (const [i, option] of column.options.entries() || [].entries()) {
+            await SingleSelectColumn.insert(
+              {
+                ...option,
+                fk_column_id: colId,
+                order: i + 1
+              },
+              ncMeta
+            );
+          }
         }
         break;
       }
@@ -771,8 +786,21 @@ export default class Column<T = any> implements ColumnType {
       case UITypes.MultiSelect:
       case UITypes.SingleSelect: {
 
-        //TODO update all records to null if option deleted
-        // for (const option of oldCol.colOptions.options.filter(oldOp => column.colOptions.options.find(newOp => newOp.id !== oldOp.id))) {}
+        const model = await oldCol.getModel();
+        const base = await Base.get(model.base_id);
+
+        const baseModel = await Model.getBaseModelSQL({
+          id: model.id,
+          dbDriver: NcConnectionMgrv2.get(base)
+        });
+        
+        for (const option of oldCol.colOptions.options.filter(oldOp => column.options.find(newOp => newOp.id === oldOp.id) ? false : true)) {
+          if (oldCol.dt === 'enum') {
+            await baseModel.bulkUpdateAll({ where: `(${oldCol.title},eq,${option.title.replace(/'/g, '')})` }, { [oldCol.title]: null });
+          } else {
+            await baseModel.bulkUpdateAll({ where: `(${oldCol.title},eq,${option.id})` }, { [oldCol.title]: null });
+          }
+        }
 
         await ncMeta.metaDelete(null, null, MetaTable.COL_SELECT_OPTIONS, {
           fk_column_id: colId
